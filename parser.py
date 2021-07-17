@@ -4,79 +4,82 @@ from datetime import datetime
 
 
 def get_games_list(country):
-    r = get(
-        f'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country={country}')
-    return loads(r.text)["data"]["Catalog"]["searchStore"]["elements"]
+    try:
+        r = get(
+            f'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country={country}')
+        return loads(r.text)["data"]["Catalog"]["searchStore"]["elements"]
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def active_promotions_list(games):
-    active_games = []
-    for game in games:
-        if game["promotions"] != None:
-            if game["promotions"]["promotionalOffers"] != []:
-                game["status"] = "active"
-                active_games.append(game)
-    return active_games
+    try:
+        active_games = []
+        for game in games:
+            if game["promotions"] != None:
+                if game["promotions"]["promotionalOffers"] != []:
+                    game["status"] = "active"
+                    active_games.append(game)
+        return active_games
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def upcoming_promotions_list(games):
-    upcoming_games = []
-    for game in games:
-        if game["promotions"] != None:
-            if game["promotions"]["promotionalOffers"] == []:
-                game["status"] = "upcoming"
-                upcoming_games.append(game)
-    return upcoming_games
+    try:
+        upcoming_games = []
+        for game in games:
+            if game["promotions"] != None:
+                if game["promotions"]["promotionalOffers"] == []:
+                    game["status"] = "upcoming"
+                    upcoming_games.append(game)
+        return upcoming_games
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def ended_promotion_list(games):
-    ended_games = []
-    for game in games:
-        if game["promotions"] == None:
-            game["status"] = "ended"
-            ended_games.append(game)
-    return ended_games
+    try:
+        ended_games = []
+        for game in games:
+            if game["promotions"] == None:
+                game["status"] = "ended"
+                ended_games.append(game)
+        return ended_games
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def get_title(game):
-    if game['title'] != None:
+    try:
         return game['title']
-    else:
+    except Exception as ex:
+        print(ex)
         return None
 
 
 def get_company_seller(game):
-    if game['seller'] != None:
-        if game['seller']['name'] != None:
-            return game['seller']['name']
-        else:
-            return None
-
-    else:
+    try:
+        return game['seller']['name']
+    except Exception as ex:
+        print(ex)
         return None
 
 
 def get_price(game):
-    if game["price"] != None:
-        if game["price"]['totalPrice'] != None:
-            if game["price"]['totalPrice']['fmtPrice'] != None:
-                if game["price"]['totalPrice']['fmtPrice']['originalPrice'] != None:
-                    return game["price"]['totalPrice']['fmtPrice']['originalPrice']
-                else:
-                    return None
-            else:
-                return None
-        else:
-            return None
-    else:
+    try:
+        return game["price"]['totalPrice']['fmtPrice']['originalPrice']
+    except Exception as ex:
+        print(ex)
         return None
 
 
-# game['keyImages'][4]['url']
-# return "ThumbnailNotFound (THIS IS NOT URL, I AM SERIOUSLY)"
-
 def get_thumbnail(game):
-    if game['keyImages'] != None:
+    try:
         for image in game['keyImages']:
             if image['type'] != None:
                 if image['type'] == 'Thumbnail':
@@ -85,13 +88,14 @@ def get_thumbnail(game):
                     continue
             else:
                 continue
-    else:
+    except Exception as ex:
+        print(ex)
         return None
 
 
 def get_begin_time(game):
-    time_str = None
     try:
+        time_str = None
         if game["promotions"]["promotionalOffers"] != []:
             time_str = game["promotions"]["promotionalOffers"][0]["promotionalOffers"][0]["startDate"]
         elif game["promotions"]["promotionalOffers"] == []:
@@ -107,8 +111,8 @@ def get_begin_time(game):
 
 
 def get_end_time(game):
-    time_str = None
     try:
+        time_str = None
         if game["promotions"]["promotionalOffers"] != []:
             time_str = game["promotions"]["promotionalOffers"][0]["promotionalOffers"][0]["endDate"]
         elif game["promotions"]["promotionalOffers"] == []:
@@ -132,46 +136,54 @@ def get_link(game):
 
 
 def get_min_game_info(game):
-    new_info = {}
-    new_info["title"] = get_title(game)
-    new_info["company_seller"] = get_company_seller(game)
-    new_info["price"] = get_price(game)
-    new_info["link"] = get_link(game)
-    new_info["thumbnail"] = get_thumbnail(game)
-    new_info["beginTime"] = get_begin_time(game)
-    new_info["endTime"] = get_end_time(game)
-    new_info["status"] = game['status']
-    return new_info
+    try:
+        new_info = {}
+        new_info["title"] = get_title(game)
+        new_info["company_seller"] = get_company_seller(game)
+        new_info["price"] = get_price(game)
+        new_info["link"] = get_link(game)
+        new_info["thumbnail"] = get_thumbnail(game)
+        new_info["beginTime"] = get_begin_time(game)
+        new_info["endTime"] = get_end_time(game)
+        new_info["status"] = game['status']
+        return new_info
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def build_min_games_list(country):
-    games = get_games_list(country)
-    active_games = active_promotions_list(games)
-    upcoming_games = upcoming_promotions_list(games)
-    ended_games = ended_promotion_list(games)
-    filedata = {}
-    filedata['allGames'] = []
-    filedata['activeGames'] = []
-    filedata['upcomingGames'] = []
-    filedata['activeUpcomingGames'] = []
-    filedata['endedGames'] = []
-    for game in games:
-        new_info = get_min_game_info(game)
-        filedata['allGames'].append(new_info)
-    for game in active_games:
-        new_info = get_min_game_info(game)
-        filedata['activeGames'].append(new_info)
-        filedata['activeUpcomingGames'].append(new_info)
-    for game in upcoming_games:
-        new_info = get_min_game_info(game)
-        filedata['upcomingGames'].append(new_info)
-        filedata['activeUpcomingGames'].append(new_info)
-    for game in ended_games:
-        new_info = get_min_game_info(game)
-        filedata['endedGames'].append(new_info)
-    with open('games.min.json', 'w') as file:
-        dump(filedata, file, indent=4)
-    return 'OK'
+    try:
+        games = get_games_list(country)
+        active_games = active_promotions_list(games)
+        upcoming_games = upcoming_promotions_list(games)
+        ended_games = ended_promotion_list(games)
+        filedata = {}
+        filedata['allGames'] = []
+        filedata['activeGames'] = []
+        filedata['upcomingGames'] = []
+        filedata['activeUpcomingGames'] = []
+        filedata['endedGames'] = []
+        for game in games:
+            new_info = get_min_game_info(game)
+            filedata['allGames'].append(new_info)
+        for game in active_games:
+            new_info = get_min_game_info(game)
+            filedata['activeGames'].append(new_info)
+            filedata['activeUpcomingGames'].append(new_info)
+        for game in upcoming_games:
+            new_info = get_min_game_info(game)
+            filedata['upcomingGames'].append(new_info)
+            filedata['activeUpcomingGames'].append(new_info)
+        for game in ended_games:
+            new_info = get_min_game_info(game)
+            filedata['endedGames'].append(new_info)
+        with open('games.min.json', 'w') as file:
+            dump(filedata, file, indent=4)
+        return 'OK'
+    except Exception as ex:
+        print(ex)
+        return None
 
 
 def main():
