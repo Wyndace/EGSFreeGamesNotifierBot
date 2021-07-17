@@ -6,10 +6,7 @@ from datetime import datetime
 def get_games_list(country):
     r = get(
         f'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country={country}')
-    games = loads(r.text)["data"]["Catalog"]["searchStore"]["elements"]
-    with open('games list.json', 'w') as file:
-        dump(games, file)
-    return games
+    return loads(r.text)["data"]["Catalog"]["searchStore"]["elements"]
 
 
 def active_promotions_list(games):
@@ -17,6 +14,7 @@ def active_promotions_list(games):
     for game in games:
         if game["promotions"] != None:
             if game["promotions"]["promotionalOffers"] != []:
+                game["status"] = "active"
                 active_games.append(game)
     return active_games
 
@@ -26,8 +24,18 @@ def upcoming_promotions_list(games):
     for game in games:
         if game["promotions"] != None:
             if game["promotions"]["promotionalOffers"] == []:
+                game["status"] = "upcoming"
                 upcoming_games.append(game)
     return upcoming_games
+
+
+def ended_promotion_list(games):
+    ended_games = []
+    for game in games:
+        if game["promotions"] == None:
+            game["status"] = "ended"
+            ended_games.append(game)
+    return ended_games
 
 
 def get_title(game):
@@ -81,16 +89,45 @@ def get_thumbnail(game):
         return None
 
 
-def main():
-    games = get_games_list('RU')
+def get_min_game_info(game):
+    new_info = {}
+    new_info["title"] = get_title(game)
+    new_info["price"] = get_price(game)
+    new_info["company_seller"] = get_company_seller(game)
+    new_info["thumbnail"] = get_thumbnail(game)
+    new_info["status"] = game['status']
+    return new_info
+
+
+def build_min_games_list(country):
+    games = get_games_list(country)
     active_games = active_promotions_list(games)
     upcoming_games = upcoming_promotions_list(games)
+    ended_games = ended_promotion_list(games)
+    filedata = {}
+    filedata['allGames'] = []
+    filedata['activeGames'] = []
+    filedata['upcomingGames'] = []
+    filedata['endedGames'] = []
     for game in games:
-        print(f'''\nName: {get_title(game)},
-Company Seller: {get_company_seller(game)}
-Price: {get_price(game)}
-Thumbnail: {get_thumbnail(game)}
-----------------------------------------\n''')
+        new_info = get_min_game_info(game)
+        filedata['allGames'].append(new_info)
+    for game in active_games:
+        new_info = get_min_game_info(game)
+        filedata['activeGames'].append(new_info)
+    for game in upcoming_games:
+        new_info = get_min_game_info(game)
+        filedata['upcomingGames'].append(new_info)
+    for game in ended_games:
+        new_info = get_min_game_info(game)
+        filedata['endedGames'].append(new_info)
+    with open('games.min.json', 'w') as file:
+        dump(filedata, file, indent=4)
+    return 'OK'
+
+
+def main():
+    build_min_games_list('RU')
 
 
 if __name__ == "__main__":
