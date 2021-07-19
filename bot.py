@@ -8,6 +8,11 @@ from os import makedirs
 import logging
 from aiogram import Bot, Dispatcher, executor, types, exceptions, asyncio
 from wiki import get_country_code
+import sqlite3
+
+
+def check_db(filename):
+    return exists(filename)
 
 
 def logs_creator():
@@ -22,6 +27,28 @@ dp = Dispatcher(bot)
 
 
 print(exceptions)
+
+
+def update_user_table(message):
+    db_file = f'database.db'
+    schema_file = f'schema.sql'
+
+    with open(schema_file, 'r') as rf:
+        # Read the schema from the file
+        schema = rf.read()
+
+    with sqlite3.connect(db_file) as conn:
+        print(f'[{ctime()}]Created the connection!')
+        # Execute the SQL query to create the table
+        conn.executescript(schema)
+        print(f'[{ctime()}] Created the Table! Now inserting')
+        conn.executescript(f"""
+                        insert into users_data (user_name, user_id, country_code)
+                        values
+                        ({message.from_user.full_name}, {message.from_user.id}, {message.text})
+                        """)
+        print(f'[{ctime()}] Inserted values into the table!')
+    print(f'[{ctime()}] Closed the connection!')
 
 
 def main():
