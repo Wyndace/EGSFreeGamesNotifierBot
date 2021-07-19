@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from requests import get
 from json import loads, dump
 from datetime import datetime
