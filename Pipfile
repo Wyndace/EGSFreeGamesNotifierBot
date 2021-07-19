@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 requests = "*"
+aiogram = "*"
+bs4 = "*"
+lxml = "*"
 
 [dev-packages]
 
