@@ -1,2 +1,5 @@
 Pipfile.lock
 games.min.json
+auth.py
+__pycache__
+logs
